@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: jenkins
+  labels:
+    name: jenkins
+    app: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      namespace: jenkins
+      labels:
+        app: jenkins
+    spec:
+      serviceAccountName: jenkins
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts-jdk11
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: JAVA_OPTS
+          value: -Xmx2048m -Dhudson.slaves.NodeProvisioner.MARGIN=50 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.85
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: jnlp
+          containerPort: 50000
+          protocol: TCP
+        volumeMounts:
+        - name: jenkins-storage
+          mountPath: /var/jenkins_home
+      restartPolicy: Always
+      volumes:
+      - name: jenkins-storage
+        persistentVolumeClaim:
+          claimName: jenkins-pvc
+
